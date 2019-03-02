@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "electron-ipcfy",
   "version": "0.0.1",
   "description": "An electron ipc typescript framework",
