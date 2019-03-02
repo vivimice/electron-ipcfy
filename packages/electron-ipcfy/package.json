@@ -1,0 +1,22 @@
+{
+  "name": "electron-ipc-facade",
+  "version": "1.0.0",
+  "description": "An electron ipc typescript framework",
+  "license": "MIT",
+  "author": "Liao Wenwei <vivimice@gmail.com>",
+  "repository": "https://github.com/vivimice/electron-ipcfy",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "keywords": [
+    "electron",
+    "ipc"
+  ],
+  "devDependencies": {
+    "typescript": "^3.3.3333"
+  }
+}

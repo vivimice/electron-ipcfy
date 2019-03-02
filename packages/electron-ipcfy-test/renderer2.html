@@ -1,0 +1,38 @@
+<html>
+    <head>
+        <title>Renderer #2 - electron-ipc-facade test application</title>
+        <meta charset="utf-8" />
+        <style>
+            th { background: #eee; line-height: 2em; }
+            .counter { font-size: large; line-height: 2em; text-align: center;}
+            .randomize { padding: 5px 0; text-align: center; }
+        </style>
+    </head>
+    <body>
+        <h1 style="text-align: center;">Renderer #2</h1>
+
+        <table style="width:100%">
+            <tr>
+                <th>Main</th>
+                <th>Renderer #1</th>
+                <th>Renderer #2</th>
+            </tr>
+            <tr>
+                <td class="counter" id="main-counter"></td>
+                <td class="counter" id="renderer1-counter"></td>
+                <td class="counter" id="renderer2-counter"></td>
+            </tr>
+            <tr>
+                <td class="randomize"><button id="update-main">Randomize</button></td>
+                <td class="randomize"><button id="update-renderer1">Randomize</button></td>
+                <td class="randomize"><button id="update-renderer2">Randomize</button></td>
+            </tr>
+        </table>
+
+        <div style="text-align: center; margin: 20px;">
+            <button id="show-renderer1">Show Renderer #1</button>
+        </div>
+
+        <script src="dist/renderer2-bundle.js"></script>
+    </body>
+</html>
