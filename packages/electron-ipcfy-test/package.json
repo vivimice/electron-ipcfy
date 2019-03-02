@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "electron-ipcfy-test",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "license": "MIT",
   "author": "Liao Wenwei <vivimice@gmail.com>",
@@ -17,7 +17,6 @@
     "watch": "tsc && npm-run-all -r -p -l tsc-watch bundle-watch"
   },
   "dependencies": {
-    "electron": "^3.0.9",
     "electron-ipcfy": "../electron-ipcfy"
   },
   "devDependencies": {

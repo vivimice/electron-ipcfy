@@ -1,6 +1,7 @@
 {
-  "name": "electron-ipc-facade",
-  "version": "1.0.0",
+  "private": true,
+  "name": "electron-ipcfy",
+  "version": "0.0.1",
   "description": "An electron ipc typescript framework",
   "license": "MIT",
   "author": "Liao Wenwei <vivimice@gmail.com>",
@@ -17,6 +18,8 @@
     "ipc"
   ],
   "devDependencies": {
+    "electron": "^3.0.9",
     "typescript": "^3.3.3333"
-  }
+  },
+  "dependencies": {}
 }
