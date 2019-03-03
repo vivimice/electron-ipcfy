@@ -1,6 +1,6 @@
 {
   "name": "electron-ipcfy",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "An electron ipc typescript framework",
   "license": "MIT",
   "author": "Liao Wenwei <vivimice@gmail.com>",
@@ -9,12 +9,17 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
+    "pack": "tsc && cp ../../README.md ../../LICENSE.md . && npm pack",
     "watch": "tsc -w"
   },
   "keywords": [
     "electron",
     "ipc"
+  ],
+  "files": [
+    "README.md",
+    "LICENSE.md",
+    "dist/"
   ],
   "devDependencies": {
     "electron": "^3.0.9",

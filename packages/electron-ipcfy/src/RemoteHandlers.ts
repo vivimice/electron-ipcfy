@@ -1,6 +1,6 @@
 import { ipcMain, ipcRenderer, webContents } from "electron";
 import { getMyCallerId, popContext, pushContext, MAIN_PROCESS_CALLER_ID } from "./IpcContext";
-import { isMain, webContentsAvailable } from "./utils";
+import { isMain } from "./utils";
 
 type IpcInvokeParams = {
     topic: string;

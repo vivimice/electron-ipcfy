@@ -3,7 +3,8 @@
 * [Introduction](#introduction)
 * [Motivation](#motivation)
 * [Install](#install)
-* [Get started](#get-stared)
+* [Pros](#pros)
+* [Limitations](#limitations)
 
 ## Introduction
 

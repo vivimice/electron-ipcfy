@@ -5,6 +5,7 @@ import { acceptRemoteCall, createRemoteHandler, RawHandler, stopAcceptRemoteCall
 import { isMain, webContentsAvailable } from "./utils";
 
 const registrationChannel = 'ipcreg:reg';
+const registrationResultChannel = 'ipcreg:regrsp'
 const unregistrationChannel = 'ipcreg:unreg';
 const queryChannel = 'ipcreg:qry';
 const queryResultChannel = 'ipcreg:qryrsp'
@@ -19,7 +20,12 @@ export class IpcRegistry {
         if (isMain) {
             // listen on remote topic registration ipcs
             ipcMain.on(registrationChannel, (event, topic) => {
-                this.routeTable[topic] = event.sender.id;
+                if (this.routeTable[topic] == null) {
+                    this.routeTable[topic] = event.sender.id;
+                    event.sender.send(registrationResultChannel, true);
+                } else {
+                    event.sender.send(registrationResultChannel, false);
+                }
             });
             ipcMain.on(unregistrationChannel, (event, topic) => {
                 if (this.routeTable[topic] == event.sender.id) {
@@ -41,22 +47,38 @@ export class IpcRegistry {
         }
     }
 
-    private registerImpl(topic: string, impl: any): void {
-        if (this.localHandlers[topic] == null) {
-            // start serve local process calls
-            this.localHandlers[topic] = impl;
-            // start serve remote process calls
-            acceptRemoteCall(topic, impl);
-            if (!isMain) {
-                // notify main process that I have the implementation
-                ipcRenderer.send(registrationChannel, topic);
+    private registerImpl(topic: string, impl: any): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            if (this.localHandlers[topic] == null) {
+                const doLocalRegistration = () => {
+                    // start serve local process calls
+                    this.localHandlers[topic] = impl;
+                    // start serve remote process calls
+                    acceptRemoteCall(topic, impl);
+                    resolve();
+                };
+
+                if (!isMain) {
+                    // notify main process that I have the implementation
+                    ipcRenderer.once(registrationResultChannel, (event, result: boolean) => {
+                        if (result) {
+                            doLocalRegistration();
+                        } else {
+                            reject(new Error(`Topic ${topic} already registerred`));
+                        }
+                    });
+                    ipcRenderer.send(registrationChannel, topic);
+                } else {
+                    // Main process
+                    doLocalRegistration();
+                }
+            } else {
+                reject(new Error(`Topic ${topic} already registerred`));
             }
-        } else {
-            throw new Error(`Topic ${topic} already registerred`);
-        }
+        });
     }
 
-    private unregisterImpl(topic: string): void {
+    private unregisterImpl(topic: string): Promise<void> {
         if (this.localHandlers[topic] == null) {
             // not registered before
             return;
