@@ -1,4 +1,4 @@
-import { ipcfy } from "electron-ipc-facade";
+import { ipcfy } from "electron-ipcfy";
 
 export interface MainService {
     showRenderer1();
