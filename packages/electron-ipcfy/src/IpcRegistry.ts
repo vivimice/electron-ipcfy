@@ -20,7 +20,8 @@ export class IpcRegistry {
         if (isMain) {
             // listen on remote topic registration ipcs
             ipcMain.on(registrationChannel, (event, topic) => {
-                if (this.routeTable[topic] == null) {
+                const prevId = this.routeTable[topic];
+                if (prevId == null || !webContentsAvailable(prevId)) {
                     this.routeTable[topic] = event.sender.id;
                     event.sender.send(registrationResultChannel, true);
                 } else {
@@ -107,6 +108,8 @@ export class IpcRegistry {
                             return await self.registerImpl(topic, args[0]);
                         case '__detachImpl':
                             return await self.unregisterImpl(topic);
+                        case '__getTopic':
+                            return topic;
                         default:
                             return await self.invoke(topic, methodName, args);
                     }

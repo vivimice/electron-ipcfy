@@ -17,10 +17,11 @@ Due to [limitations](../README.md#limitations), all arguments and return values 
 
 Ipcfied is an wrapper type for a given IpcDecl, it selects all methods declared within given IpcDecl, and wrap all return types using `Promise` if not already one.
 
-Also, Ipcfied interface will contain two additional utility method:
+Also, Ipcfied interface will contain some additional utility method:
 
 * [`__attachImpl(impl)`](#ipcfiedd.__attachimplimpl-d)
 * [`__detachImpl()`](#ipcfiedd.__detachimpl)
+* [`__getTopic()`](#ipcfiedd.__gettopic)
 
 For example, for a certain IpcDecl: 
 
@@ -87,6 +88,12 @@ This method will detach previously attached implementation, makes it possible fo
 
 Note: This method will only work when called within implementation's process, otherwise it just return silently.
 
+### `Ipcfied<D>.__getTopic(): string`
+
+* `D` typeof specific [IpcDecl](#ipcdecl)
+
+Returns topic associated with this Ipcfied interface.
+
 ### `getCurrentIpcContext()`
 
 Calling this method in an ipc handler function, it will returns a `IpcContext` which contains most recent information about the callers, etc. in calling stack.
@@ -99,7 +106,6 @@ Return value is an instance of `IpcContext`, which has the following signature:
 type IpcContext = {
     readonly topic: string;
     readonly callerId: number;   // webContents.id of caller. 0 if main process.
-    readonly callerBrowserWindow: BrowserWindow;
     readonly callerWebContents: WebContents;
 }
 ```
