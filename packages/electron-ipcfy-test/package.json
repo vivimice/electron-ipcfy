@@ -1,0 +1,24 @@
+{
+  "private": true,
+  "name": "electron-ipcfy-test",
+  "version": "0.0.1",
+  "description": "",
+  "license": "MIT",
+  "author": "Liao Wenwei <vivimice@gmail.com>",
+  "repository": "https://github.com/vivimice/electron-ipcfy",
+  "main": "dist/main.js",
+  "scripts": {
+    "test": "tsc && xvfb-maybe electron-mocha dist/main.js",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+    "@types/mocha": "^5.2.6",
+    "electron-ipcfy": "../electron-ipcfy"
+  },
+  "devDependencies": {
+    "electron": "^3.0.9",
+    "electron-mocha": "^6.0.4",
+    "typescript": "^3.3.3333",
+    "xvfb-maybe": "^0.2.1"
+  }
+}
