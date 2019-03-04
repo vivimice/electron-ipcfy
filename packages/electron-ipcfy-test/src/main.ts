@@ -11,3 +11,6 @@ describe('Smoke Test', () => {
     require('./test/smoke-test');
 });
 
+describe('Error test', () => {
+    require('./test/error-test');
+});

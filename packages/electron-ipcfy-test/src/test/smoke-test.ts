@@ -20,7 +20,7 @@ describe('Echo', () => {
     });
 
     it('main -> renderer1', async () => {
-        const renderer = await prepareRenderer('renderer1');
+        const renderer = await prepareRenderer('renderer1', 'smoke');
         const args = await renderer1Service.echo(n, s, { b }, 1, true, 'foo');
         assert.equal(args.n, n);
         assert.equal(args.s, s);
@@ -30,7 +30,7 @@ describe('Echo', () => {
     }).timeout(10000);
 
     it('main -> renderer2', async () => {
-        const renderer = await prepareRenderer('renderer2');
+        const renderer = await prepareRenderer('renderer2', 'smoke');
         const args = await renderer2Service.echo(n, s, { b }, 1, true, 'bar');
         assert.equal(args.n, n);
         assert.equal(args.s, s);
@@ -47,8 +47,8 @@ describe('Echo', () => {
  */
 describe('Chained call', () => {
     it('main -> render1 -> renderer2 -> main', async () => {
-        const renderer1 = await prepareRenderer('renderer1');
-        const renderer2 = await prepareRenderer('renderer2');
+        const renderer1 = await prepareRenderer('renderer1', 'smoke');
+        const renderer2 = await prepareRenderer('renderer2', 'smoke');
 
         let expectedArgs = { n, s, o: { b } };
         expectedArgs = renderer1.config.patchArgs(expectedArgs);
