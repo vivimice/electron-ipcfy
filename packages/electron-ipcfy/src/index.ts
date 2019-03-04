@@ -26,4 +26,4 @@ export function ipcfy<D extends IpcDecl>(topic: string): Ipcfied<D> {
 }
 
 export { getCurrentIpcContext } from "./IpcContext";
-export { IpcTimeoutError } from "./RemoteHandlers";
+export { IpcTimeoutError, IpcNotImplementedError, DuplicateImplementationError, IpcInvocationError, IpcMethodNotFoundError } from "./utils";

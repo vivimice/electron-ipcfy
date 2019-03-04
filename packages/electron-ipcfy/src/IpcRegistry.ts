@@ -2,7 +2,7 @@ import { ipcMain, ipcRenderer, remote } from "electron";
 import { Ipcfied } from ".";
 import { getMyCallerId, popContext, pushContext } from "./IpcContext";
 import { acceptRemoteCall, createRemoteHandler, RawHandler, stopAcceptRemoteCall } from "./RemoteHandlers";
-import { isMain, webContentsAvailable } from "./utils";
+import { isMain, webContentsAvailable, DuplicateImplementationError, IpcNotImplementedError, InvalidImplementationError } from "./utils";
 
 const registrationChannel = 'ipcreg:reg';
 const registrationResultChannel = 'ipcreg:regrsp'
@@ -49,6 +49,10 @@ export class IpcRegistry {
     }
 
     private registerImpl(topic: string, impl: any): Promise<void> {
+        if (impl == null) {
+            throw new InvalidImplementationError(topic);
+        }
+
         return new Promise<void>((resolve, reject) => {
             if (this.localHandlers[topic] == null) {
                 const doLocalRegistration = () => {
@@ -65,7 +69,7 @@ export class IpcRegistry {
                         if (result) {
                             doLocalRegistration();
                         } else {
-                            reject(new Error(`Topic ${topic} already registerred`));
+                            reject(new DuplicateImplementationError(topic));
                         }
                     });
                     ipcRenderer.send(registrationChannel, topic);
@@ -74,7 +78,7 @@ export class IpcRegistry {
                     doLocalRegistration();
                 }
             } else {
-                reject(new Error(`Topic ${topic} already registerred`));
+                reject(new DuplicateImplementationError(topic));
             }
         });
     }
@@ -155,7 +159,7 @@ export class IpcRegistry {
         } else {
             // handler resident in some renderer process
             if (destId == null || !webContentsAvailable(destId)) {
-                return Promise.reject(new Error(`Topic '${topic}' has no valid handler registered.`));
+                return Promise.reject(new IpcNotImplementedError(topic));
             }
             remoteHandler = createRemoteHandler(topic, destId);
         }

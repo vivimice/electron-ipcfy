@@ -1,6 +1,6 @@
 import { ipcMain, ipcRenderer, webContents } from "electron";
 import { getMyCallerId, popContext, pushContext, MAIN_PROCESS_CALLER_ID } from "./IpcContext";
-import { isMain } from "./utils";
+import { isMain, IpcTimeoutError, IpcMethodNotFoundError, IpcNotImplementedError, IpcInvocationError } from "./utils";
 
 type IpcInvokeParams = {
     topic: string;
@@ -22,32 +22,6 @@ const invokeChannel = 'ipcrmt:nvk';
 export type WebContentIdSupplier = () => Promise<number>;
 
 export type RawHandler = (methodName: string, args: any[]) => Promise<any>;
-
-export class IpcTimeoutError extends Error {
-    private topic: string;
-    private methodName: string;
-    private args: any[];
-
-    constructor(topic: string, methodName: string, args: any[]) {
-        super(`Timeout calling method '${methodName}' on topic ${topic}`);
-        Object.setPrototypeOf(this, new.target.prototype);
-        this.topic = topic;
-        this.methodName = methodName;
-        this.args = args;
-    }
-
-    public getTopic(): string {
-        return this.topic;
-    }
-
-    public getMethodName(): string {
-        return this.methodName;
-    }
-
-    public getArgs(): any[] {
-        return this.args;
-    }
-}
 
 /**
  * 
@@ -71,8 +45,8 @@ export function createRemoteHandler(topic: string, destId: number = null): RawHa
 
                 (isMain ? ipcMain : ipcRenderer).removeListener(callbackChannel, callbackHandler);
                 if (result.error) {
-                    const error = new Error(result.error.message);
-                    error.stack = result.error.stack;
+                    const error = new IpcInvocationError(
+                        result.error.message, result.error.stack, topic, methodName, args);
                     reject(error);
                 } else {
                     resolve(result.returnValue);
@@ -145,10 +119,10 @@ async function invokeHandler(event, params: IpcInvokeParams) {
                 popContext();
             }
         } else {
-            result = { callbackId, error: new Error(`Ipc method ${params.methodName} not found.`) };
+            result = { callbackId, error: new IpcMethodNotFoundError(params.methodName, topic) };
         }
     } else {
-        result = { callbackId, error: new Error(`Topic ${topic} is has no handler attached`) };
+        result = { callbackId, error: new IpcNotImplementedError(topic) };
     }
 
 
