@@ -2,7 +2,7 @@ import { ipcMain, ipcRenderer, remote } from "electron";
 import { Ipcfied } from ".";
 import { getMyCallerId, popContext, pushContext } from "./IpcContext";
 import { acceptRemoteCall, createRemoteHandler, RawHandler, stopAcceptRemoteCall } from "./RemoteHandlers";
-import { isMain, webContentsAvailable, DuplicateImplementationError, IpcNotImplementedError, InvalidImplementationError, IpcInvocationError } from "./utils";
+import { isMain, webContentsAvailable, DuplicateImplementationError, IpcNotImplementedError, InvalidImplementationError, IpcInvocationError, IpcMethodNotFoundError, IpcTimeoutError } from "./utils";
 
 const registrationChannel = 'ipcreg:reg';
 const registrationResultChannel = 'ipcreg:regrsp'
@@ -10,6 +10,46 @@ const unregistrationChannel = 'ipcreg:unreg';
 const queryChannel = 'ipcreg:qry';
 const queryResultChannel = 'ipcreg:qryrsp'
 const IN_MAIN_PROCESS = 0;
+
+const topicTimeouts: { [topic: string]: number } = {};
+let defaultTimeOut = 1000;
+
+/**
+ * Set global default timeout for all ipc calls.
+ * 
+ * @param timeOutInMills 0 to disable timeout. Use with caution!
+ */
+export function setIpcDeultTimeout(timeOutInMills: number) {
+    if (timeOutInMills >= 0) {
+        defaultTimeOut = timeOutInMills;
+    } else {
+        throw new Error(`Timeout must be zero or positive numbers`);
+    }
+}
+
+/**
+ * Get timeout for given topic
+ * 
+ * @param topic
+ */
+export function getTopicTimeout(topic: string): number {
+    const timeout = topicTimeouts[topic];
+    return timeout >= 0 ? timeout : defaultTimeOut;
+}
+
+/**
+ * Set timeout for given topic
+ * 
+ * @param topic 
+ * @param timeOutInMills 0 to disable timeout. Use with caution!
+ */
+export function setTopicTimeout(topic: string, timeOutInMills: number): void {    
+    if (timeOutInMills >= 0) {
+        topicTimeouts[topic] = timeOutInMills;
+    } else {
+        throw new Error(`Timeout must be zero or positive numbers`);
+    }
+}
 
 export class IpcRegistry {
 
@@ -20,17 +60,27 @@ export class IpcRegistry {
         if (isMain) {
             // listen on remote topic registration ipcs
             ipcMain.on(registrationChannel, (event, topic) => {
-                event.sender.send(
-                    registrationResultChannel,
-                    this.handleRemoteRegistration(topic, event.sender.id));
+                try {
+                    event.sender.send(
+                        registrationResultChannel,
+                        this.handleRemoteRegistration(topic, event.sender.id));
+                } catch (e) {
+                    // expected
+                    // sender may died
+                }
             });
             ipcMain.on(unregistrationChannel, (event, topic) => {
                 this.handleRemoteUnregistration(topic, event.sender.id);
             });
             ipcMain.on(queryChannel, (event, topic) => {
-                event.sender.send(
-                    queryResultChannel, 
-                    this.handleRemoteQuery(topic));
+                try {
+                    event.sender.send(
+                        queryResultChannel, 
+                        this.handleRemoteQuery(topic));
+                } catch (e) {
+                    // expected
+                    // sender may died
+                }
             });
         } else {
             // automatically unregister when page is unloaded, prevent memory leak
@@ -149,6 +199,9 @@ export class IpcRegistry {
                             return await self.unregisterImpl(topic);
                         case '__getTopic':
                             return topic;
+                        case '__setTimeout':
+                            setTopicTimeout(topic, args[0]);
+                            return;
                         default:
                             return await self.invoke(topic, methodName, args);
                     }
@@ -161,19 +214,42 @@ export class IpcRegistry {
         // first, search local handlers
         const localHandler = this.localHandlers[topic];
         if (localHandler != null) {
-            // push ipc context into stack
-            pushContext({
-                callerId: getMyCallerId(),
-                topic: topic
-            });
-            try {
-                return await localHandler[methodName].apply(localHandler, args);
-            } catch (cause) {
+            const method = localHandler[methodName];
+            if (method instanceof Function) {
+                return new Promise(async (resolve, reject) => {
+                    // push ipc context into stack
+                    pushContext({
+                        callerId: getMyCallerId(),
+                        topic: topic
+                    });
+                    try {
+                        let returned = false;
+                        let timeouted = false;
+                        const timeout = getTopicTimeout(topic);
+                        if (timeout > 0) {
+                            setTimeout(() => {
+                                if (!returned) {
+                                    reject(new IpcTimeoutError(topic, methodName, args, timeout));
+                                    timeouted = true;
+                                }
+                            }, timeout);
+                        }
+                        const returnValue = await localHandler[methodName].apply(localHandler, args);
+                        returned = true;
+                        if (!timeouted) {
+                            resolve(returnValue);
+                        }
+                    } catch (cause) {
+                        // make it consist with remote call
+                        reject(new IpcInvocationError(topic, methodName, args, cause));
+                    } finally {
+                        // pop after invoke
+                        popContext();
+                    }
+                });
+            } else {
                 // make it consist with remote call
-                return Promise.reject(new IpcInvocationError(topic, methodName, args, cause));
-            } finally {
-                // pop after invoke
-                popContext();
+                return Promise.reject(new IpcMethodNotFoundError(topic, methodName));
             }
         }
 
@@ -191,15 +267,16 @@ export class IpcRegistry {
         }
 
         let remoteHandler;
+        const timeout = getTopicTimeout(topic);
         if (destId == IN_MAIN_PROCESS) {
             // handler resident in main process
-            remoteHandler = createRemoteHandler(topic);
+            remoteHandler = createRemoteHandler(topic, timeout);
         } else {
             // handler resident in some renderer process
             if (destId == null || !webContentsAvailable(destId)) {
                 return Promise.reject(new IpcNotImplementedError(topic));
             }
-            remoteHandler = createRemoteHandler(topic, destId);
+            remoteHandler = createRemoteHandler(topic, timeout, destId);
         }
 
         return await remoteHandler(methodName, args);

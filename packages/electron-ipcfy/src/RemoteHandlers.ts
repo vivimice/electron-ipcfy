@@ -31,10 +31,11 @@ export type RawHandler = (methodName: string, args: any[]) => Promise<any>;
  *               Optional when invoked from renderer process
  */
 let callbackCounter: number = 0;
-export function createRemoteHandler(topic: string, destId: number = null): RawHandler {
+export function createRemoteHandler(topic: string, timeout: number, destId: number = null): RawHandler {
     return (methodName, args: any[]) => {
         return new Promise<any>(async (resolve, reject) => {
             let callbacked = false;
+            let timeouted = false;
             const callbackId = callbackCounter++;
             const callbackHandler = (event, result: IpcInvokeResult) => {
                 if (result.callbackId != callbackId) {
@@ -44,6 +45,11 @@ export function createRemoteHandler(topic: string, destId: number = null): RawHa
                 callbacked = true;
 
                 (isMain ? ipcMain : ipcRenderer).removeListener(callbackChannel, callbackHandler);
+
+                if (timeouted) {
+                    return;
+                }
+
                 if (result.errorJson) {
                     const error = parseIpcError(result.errorJson);
                     reject(error);
@@ -77,13 +83,16 @@ export function createRemoteHandler(topic: string, destId: number = null): RawHa
 
             // destination render may crashed during invocation
             // prevent starving situation
-            setTimeout(() => {
-                if (!callbacked) {
-                    // destination is crashed or reloaded or closed
-                    (isMain ? ipcMain : ipcRenderer).removeListener(callbackChannel, callbackHandler);
-                    reject(new IpcTimeoutError(topic, methodName, args));
-                }
-            }, 1000);
+            if (timeout > 0) {
+                setTimeout(() => {
+                    if (!callbacked) {
+                        // destination is crashed or reloaded or closed
+                        (isMain ? ipcMain : ipcRenderer).removeListener(callbackChannel, callbackHandler);
+                        reject(new IpcTimeoutError(topic, methodName, args, timeout));
+                        timeouted = true;
+                    }
+                }, timeout);
+            }
         })
     };
 }
@@ -127,7 +136,13 @@ async function invokeHandler(event, params: IpcInvokeParams) {
 
     if (isMain) {
         // Reply from main to renderer
-        event.sender.send(callbackChannel, result);
+        try {
+            event.sender.send(callbackChannel, result);
+        } catch (e) {
+            // expected
+            // when event.sender is closed
+            // often happened when timeout
+        }
     } else {
         if (callerId == MAIN_PROCESS_CALLER_ID) {
             // Reply from renderer to main

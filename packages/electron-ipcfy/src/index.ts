@@ -17,6 +17,7 @@ export type Ipcfied<D extends IpcDecl> = {
     __attachImpl(impl: D): Promise<void>;
     __detachImpl(): Promise<void>;
     __getTopic(): string;
+    __setTimeout(timeoutInMills: number): void;
 } & {
     [K in keyof D]: D[K] extends Function ? Promisified<D[K]> : never;
 }

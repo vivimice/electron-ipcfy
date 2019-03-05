@@ -119,7 +119,7 @@ export class IpcInvocationError extends Error {
     private cause: Error;
 
     constructor(topic: string, methodName: string, args: any[], cause: Error) {
-        super(`Ipc invocation error on method '${methodName}' of topic '${topic}'`);
+        super(`Ipc invocation error on method '${methodName}' of topic '${topic}': ${cause.message}`);
         Object.setPrototypeOf(this, new.target.prototype);
         this.cause = cause;
         this.topic = topic;
@@ -192,13 +192,15 @@ export class IpcTimeoutError extends Error {
     private topic: string;
     private methodName: string;
     private args: any[];
+    private timeout: number;
 
-    constructor(topic: string, methodName: string, args: any[]) {
+    constructor(topic: string, methodName: string, args: any[], timeout: number) {
         super(`Timeout calling method '${methodName}' on topic ${topic}`);
         Object.setPrototypeOf(this, new.target.prototype);
         this.topic = topic;
         this.methodName = methodName;
         this.args = args;
+        this.timeout = timeout;
     }
 
     public getTopic(): string {
@@ -211,6 +213,10 @@ export class IpcTimeoutError extends Error {
 
     public getArgs(): any[] {
         return this.args;
+    }
+
+    public getTimeout(): number {
+        return this.timeout;
     }
 }
 
