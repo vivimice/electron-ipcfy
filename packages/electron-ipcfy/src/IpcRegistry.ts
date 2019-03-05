@@ -2,7 +2,7 @@ import { ipcMain, ipcRenderer, remote } from "electron";
 import { Ipcfied } from ".";
 import { getMyCallerId, popContext, pushContext } from "./IpcContext";
 import { acceptRemoteCall, createRemoteHandler, RawHandler, stopAcceptRemoteCall } from "./RemoteHandlers";
-import { isMain, webContentsAvailable, DuplicateImplementationError, IpcNotImplementedError, InvalidImplementationError } from "./utils";
+import { isMain, webContentsAvailable, DuplicateImplementationError, IpcNotImplementedError, InvalidImplementationError, IpcInvocationError } from "./utils";
 
 const registrationChannel = 'ipcreg:reg';
 const registrationResultChannel = 'ipcreg:regrsp'
@@ -168,6 +168,9 @@ export class IpcRegistry {
             });
             try {
                 return await localHandler[methodName].apply(localHandler, args);
+            } catch (cause) {
+                // make it consist with remote call
+                return Promise.reject(new IpcInvocationError(topic, methodName, args, cause));
             } finally {
                 // pop after invoke
                 popContext();
