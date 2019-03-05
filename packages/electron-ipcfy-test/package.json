@@ -8,7 +8,7 @@
   "repository": "https://github.com/vivimice/electron-ipcfy",
   "main": "dist/main.js",
   "scripts": {
-    "test": "tsc && xvfb-maybe electron-mocha dist/main.js",
+    "test": "tsc && xvfb-maybe electron-mocha dist/main.js --timeout 10000",
     "watch": "tsc -w"
   },
   "dependencies": {

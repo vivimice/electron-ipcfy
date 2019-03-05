@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain, remote, ipcRenderer } from "electron";
 import { join, resolve as resolvePath } from "path";
 import { RendererConfig, rendererConfigs } from "./config";
-import { stringifyIpcError, parseIpcError } from "electron-ipcfy/dist/utils";
+import { stringifyIpcError, parseIpcError, registerCustomIpcError } from "electron-ipcfy/dist/utils";
 
 export const n = 1;
 export const s = 'hello, world';
@@ -76,3 +76,15 @@ export function setupRenderer(readyTopic: string, callbacks: { [ name: string ]:
     });
     return m;
 }
+
+
+export class CustomError extends Error {
+    foo: string;
+    constructor(message?: string, foo?: string) {
+        super(message);
+        Object.setPrototypeOf(this, new.target.prototype);
+        this.foo = foo;
+    }
+}
+
+registerCustomIpcError(CustomError);

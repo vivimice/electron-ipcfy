@@ -2,10 +2,15 @@ import * as assert from "assert";
 import { mainService, renderer1Service, renderer2Service, TestServiceImpl } from "../Services";
 import { n, s, b, prepareRenderer } from "../utils";
 
+afterEach(() => {
+    mainService.__detachImpl();
+});
+
 /**
  * TestService.echo functional testing
  */
 describe('Echo', () => {
+
     it('main -> main', async () => {
         await mainService.__attachImpl(new class extends TestServiceImpl {
             async call(callerChain: string[], n: number, s: string, o: { b: boolean }, ...additional: any[]) {
@@ -27,7 +32,7 @@ describe('Echo', () => {
         assert.equal(args.o.b, b);
         assert.deepEqual(args.additional, [1, true, 'foo']);
         assert.equal(args.topic, renderer.config.topic);
-    }).timeout(10000);
+    });
 
     it('main -> renderer2', async () => {
         const renderer = await prepareRenderer('renderer2', 'smoke');
@@ -37,7 +42,7 @@ describe('Echo', () => {
         assert.equal(args.o.b, b);
         assert.deepEqual(args.additional, [1, true, 'bar']);
         assert.equal(args.topic, renderer.config.topic);
-    }).timeout(10000);
+    });
 });
 
 /**
@@ -46,6 +51,7 @@ describe('Echo', () => {
  * main -> renderer1 -> renderer2 -> main
  */
 describe('Chained call', () => {
+
     it('main -> render1 -> renderer2 -> main', async () => {
         const renderer1 = await prepareRenderer('renderer1', 'smoke');
         const renderer2 = await prepareRenderer('renderer2', 'smoke');
@@ -64,5 +70,5 @@ describe('Chained call', () => {
         });
 
         await renderer1Service.call([], n, s, { b });
-    }).timeout(10000);
+    });
 });

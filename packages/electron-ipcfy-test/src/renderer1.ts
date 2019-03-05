@@ -1,8 +1,8 @@
 import { ipcRenderer } from "electron";
 import { getCurrentIpcContext } from "electron-ipcfy";
 import { rendererConfigs } from "./config";
-import { renderer1Service, renderer2Service, TestServiceImpl, conflictService } from "./Services";
-import { setupRenderer } from "./utils";
+import { renderer1Service, renderer2Service, TestServiceImpl, conflictService, errorService, timeoutService } from "./Services";
+import { setupRenderer, CustomError } from "./utils";
 
 const { readyChannel, patchArgs } = rendererConfigs.renderer1;
 
@@ -18,16 +18,28 @@ export default setupRenderer(readyChannel, {
         });
     },
 
+    attachDefaultImpl: async () => {
+        await renderer1Service.__attachImpl(TestServiceImpl.DEFAULT_INSTANCE);
+    },
+
     attachNullImpl: async () => {
         await renderer1Service.__attachImpl(null);
     },
 
     attachDuplicateImpl: async () => {
-        await renderer1Service.__attachImpl(TestServiceImpl.CALLBACKLESS_INSTANCE);
-        await renderer1Service.__attachImpl(TestServiceImpl.CALLBACKLESS_INSTANCE);
+        await renderer1Service.__attachImpl(TestServiceImpl.DEFAULT_INSTANCE);
+        await renderer1Service.__attachImpl(TestServiceImpl.DEFAULT_INSTANCE);
     },
 
     attachConflictImpl: async () => {
-        await conflictService.__attachImpl(TestServiceImpl.CALLBACKLESS_INSTANCE);
+        await conflictService.__attachImpl(TestServiceImpl.DEFAULT_INSTANCE);
+    },
+
+    attachErrorImpl: async () => {
+        await errorService.__attachImpl(TestServiceImpl.createErrorRaisingImpl(() => new CustomError('hohoho')));
+    },
+
+    attach100msTimeoutImpl: async () => {
+        await timeoutService.__attachImpl(TestServiceImpl.createTimeoutImpl(100));
     }
 });
