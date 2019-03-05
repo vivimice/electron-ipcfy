@@ -1,6 +1,6 @@
 import { ipcMain, ipcRenderer, webContents } from "electron";
 import { getMyCallerId, popContext, pushContext, MAIN_PROCESS_CALLER_ID } from "./IpcContext";
-import { isMain, IpcTimeoutError, IpcMethodNotFoundError, IpcNotImplementedError, IpcInvocationError } from "./utils";
+import { isMain, IpcTimeoutError, IpcMethodNotFoundError, IpcNotImplementedError, IpcInvocationError, parseIpcError, stringifyIpcError } from "./utils";
 
 type IpcInvokeParams = {
     topic: string;
@@ -13,7 +13,7 @@ type IpcInvokeParams = {
 type IpcInvokeResult = {
     callbackId: number;
     returnValue?: any;
-    error?: { [K in keyof Error]: Error[K] };
+    errorJson?: string;
 }
 
 const callbackChannel = 'ipcrmt:cbk';
@@ -44,9 +44,8 @@ export function createRemoteHandler(topic: string, destId: number = null): RawHa
                 callbacked = true;
 
                 (isMain ? ipcMain : ipcRenderer).removeListener(callbackChannel, callbackHandler);
-                if (result.error) {
-                    const error = new IpcInvocationError(
-                        result.error.message, result.error.stack, topic, methodName, args);
+                if (result.errorJson) {
+                    const error = parseIpcError(result.errorJson);
                     reject(error);
                 } else {
                     resolve(result.returnValue);
@@ -102,7 +101,8 @@ export function stopAcceptRemoteCall(topic: string) {
 async function invokeHandler(event, params: IpcInvokeParams) {
     const { topic, callbackId, methodName } = params;
     const handler = handlers[topic];
-    let result: IpcInvokeResult;
+    let error = null;
+    let returnValue = null;
     if (handler != null) {
         const method = handler[methodName];
         if (method instanceof Function) {
@@ -111,29 +111,22 @@ async function invokeHandler(event, params: IpcInvokeParams) {
                     callerId: params.callerId,
                     topic: topic
                 });
-                const returnValue = await method.apply(handler, params.args);
-                result = { callbackId, returnValue };
-            } catch (error) {
-                result = { callbackId, error }
+                returnValue = await method.apply(handler, params.args);
+            } catch (err) {
+                error = err;
             } finally {
                 popContext();
             }
         } else {
-            result = { callbackId, error: new IpcMethodNotFoundError(params.methodName, topic) };
+            error = new IpcMethodNotFoundError(params.methodName, topic);
         }
     } else {
-        result = { callbackId, error: new IpcNotImplementedError(topic) };
+        error = new IpcNotImplementedError(topic);
     }
-
-
-    if (result.error) {
-        const jsonableError = {
-            name: result.error.name,
-            message: result.error.message,
-            stack: result.error.stack
-        }
-        result.error = jsonableError;
-    }
+    
+    const result: IpcInvokeResult = (error == null) 
+        ? { callbackId, returnValue }
+        : { callbackId, errorJson: stringifyIpcError(error) };
 
     if (isMain) {
         // Reply from main to renderer

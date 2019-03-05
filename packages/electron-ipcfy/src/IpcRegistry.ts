@@ -49,11 +49,11 @@ export class IpcRegistry {
     }
 
     private registerImpl(topic: string, impl: any): Promise<void> {
-        if (impl == null) {
-            throw new InvalidImplementationError(topic);
-        }
-
         return new Promise<void>((resolve, reject) => {
+            if (impl == null) {
+                reject(new InvalidImplementationError(topic));
+            }
+
             if (this.localHandlers[topic] == null) {
                 const doLocalRegistration = () => {
                     // start serve local process calls
