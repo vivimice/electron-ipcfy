@@ -1,7 +1,6 @@
-import { ipcRenderer } from "electron";
 import { getCurrentIpcContext } from "electron-ipcfy";
 import { rendererConfigs } from "./config";
-import { mainService, renderer2Service, TestServiceImpl } from "./Services";
+import { conflictService, mainService, renderer2Service, TestServiceImpl } from "./Services";
 import { setupRenderer } from "./utils";
 
 const { readyChannel, patchArgs } = rendererConfigs.renderer2;
@@ -16,5 +15,9 @@ export default setupRenderer(readyChannel, {
                 await mainService.call(callerChain.concat([topic]), n, s, o);
             }
         });
+    },
+
+    attachConflictImpl: async () => {
+        await conflictService.__attachImpl(TestServiceImpl.CALLBACKLESS_INSTANCE);
     }
 });

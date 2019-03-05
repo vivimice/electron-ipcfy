@@ -1,7 +1,7 @@
 import { ipcRenderer } from "electron";
 import { getCurrentIpcContext } from "electron-ipcfy";
 import { rendererConfigs } from "./config";
-import { renderer1Service, renderer2Service, TestServiceImpl } from "./Services";
+import { renderer1Service, renderer2Service, TestServiceImpl, conflictService } from "./Services";
 import { setupRenderer } from "./utils";
 
 const { readyChannel, patchArgs } = rendererConfigs.renderer1;
@@ -20,5 +20,14 @@ export default setupRenderer(readyChannel, {
 
     attachNullImpl: async () => {
         await renderer1Service.__attachImpl(null);
+    },
+
+    attachDuplicateImpl: async () => {
+        await renderer1Service.__attachImpl(TestServiceImpl.CALLBACKLESS_INSTANCE);
+        await renderer1Service.__attachImpl(TestServiceImpl.CALLBACKLESS_INSTANCE);
+    },
+
+    attachConflictImpl: async () => {
+        await conflictService.__attachImpl(TestServiceImpl.CALLBACKLESS_INSTANCE);
     }
 });
