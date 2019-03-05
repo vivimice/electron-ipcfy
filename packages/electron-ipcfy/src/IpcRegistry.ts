@@ -20,23 +20,17 @@ export class IpcRegistry {
         if (isMain) {
             // listen on remote topic registration ipcs
             ipcMain.on(registrationChannel, (event, topic) => {
-                const prevId = this.routeTable[topic];
-                if (prevId == null || !webContentsAvailable(prevId)) {
-                    this.routeTable[topic] = event.sender.id;
-                    event.sender.send(registrationResultChannel, true);
-                } else {
-                    event.sender.send(registrationResultChannel, false);
-                }
+                event.sender.send(
+                    registrationResultChannel,
+                    this.handleRemoteRegistration(topic, event.sender.id));
             });
             ipcMain.on(unregistrationChannel, (event, topic) => {
-                if (this.routeTable[topic] == event.sender.id) {
-                    delete this.routeTable[topic];
-                }
+                this.handleRemoteUnregistration(topic, event.sender.id);
             });
             ipcMain.on(queryChannel, (event, topic) => {
-                const destId = !!this.localHandlers[topic] ? 
-                        IN_MAIN_PROCESS : this.routeTable[topic];
-                event.sender.send(queryResultChannel, destId);
+                event.sender.send(
+                    queryResultChannel, 
+                    this.handleRemoteQuery(topic));
             });
         } else {
             // automatically unregister when page is unloaded, prevent memory leak
@@ -45,6 +39,42 @@ export class IpcRegistry {
                 ipcRenderer.removeAllListeners(queryResultChannel);
             };
             window.addEventListener('beforeunload', unloadHandler);
+        }
+    }
+
+    private handleRemoteRegistration(topic: string, remoteId: number): boolean {
+        // This method should called in main process
+        if (!this.hasImpl(topic)) {
+            this.routeTable[topic] = remoteId;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private handleRemoteUnregistration(topic: string, remoteId: number): void {
+        // This method should called in main process
+        if (!this.localHandlers[topic] && this.routeTable[topic] == remoteId) {
+            delete this.routeTable[topic];
+        }
+    }
+
+    private handleRemoteQuery(topic: string): number {
+        // This method should called in main process
+        return !!this.localHandlers[topic] ? IN_MAIN_PROCESS : this.routeTable[topic];
+    }
+
+    private hasImpl(topic: string): boolean {
+        // This method should called in main process
+        if (this.localHandlers[topic]) {
+            return true;
+        }
+
+        const prevId = this.routeTable[topic];
+        if (prevId != null && webContentsAvailable(prevId)) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -75,7 +105,12 @@ export class IpcRegistry {
                     ipcRenderer.send(registrationChannel, topic);
                 } else {
                     // Main process
-                    doLocalRegistration();
+                    // prevent replace remote handler
+                    if (!this.hasImpl(topic)) {
+                        doLocalRegistration();
+                    } else {
+                        reject(new DuplicateImplementationError(topic));
+                    }
                 }
             } else {
                 reject(new DuplicateImplementationError(topic));
