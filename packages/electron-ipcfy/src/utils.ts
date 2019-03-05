@@ -24,7 +24,9 @@ export function registerCustomIpcError<T extends Error>(errorType: { new(...args
     if (!name) {
         name = errorType.name;
     }
-    if (customIpcErrors[name] != null) {
+
+    const prev = customIpcErrors[name]
+    if (prev != null && prev.errorType !== errorType) {
         throw new Error(`Duplicate custom ipc error for name='${name}'`);
     }
     customIpcErrors[name] = { errorType };
@@ -32,20 +34,21 @@ export function registerCustomIpcError<T extends Error>(errorType: { new(...args
 }
 
 export function stringifyIpcError(error: Error): string {
-    return JSON.stringify(error, (key, value) => {
+    return JSON.stringify(error, (_, value) => {
         if (value instanceof Error) {
             const jsonable = {};
             Object.getOwnPropertyNames(value).forEach((key) => {
                 jsonable[key] = value[key];
             });
-            value = jsonable;
-
-            const name = Object.getPrototypeOf(error)[ipcErrorTypeKey];
+            
+            const name = Object.getPrototypeOf(value)[ipcErrorTypeKey];
             if (name) {
                 jsonable[ipcErrorTypeKey] = name;
             } else {
                 console.log(`WARN failed stringify custom error. Use registerCustomIpcError(errorType) before invocation on both sender and receiver side`);
             }
+            
+            value = jsonable;
         }
         return value;
     });
@@ -58,6 +61,8 @@ export function parseIpcError(json: string): Error {
         if (customIpcError) {
             delete value[ipcErrorTypeKey];
             Object.setPrototypeOf(value, customIpcError.errorType.prototype);
+        } else {
+            Object.setPrototypeOf(value, Error.prototype);
         }
         return value;
     });
@@ -111,11 +116,12 @@ export class IpcInvocationError extends Error {
     private topic: string;
     private methodName: string;
     private args: any[];
+    private cause: Error;
 
-    constructor(message:string, stack: string, topic: string, methodName: string, args: any[]) {
-        super(message);
+    constructor(topic: string, methodName: string, args: any[], cause: Error) {
+        super(`Ipc invocation error on method '${methodName}' of topic '${topic}'`);
         Object.setPrototypeOf(this, new.target.prototype);
-        this.stack = stack;
+        this.cause = cause;
         this.topic = topic;
         this.methodName = methodName;
         this.args = args;
@@ -131,6 +137,10 @@ export class IpcInvocationError extends Error {
 
     public getArgs(): any[] {
         return this.args;
+    }
+
+    public getCause(): Error {
+        return this.cause;
     }
 
 }
