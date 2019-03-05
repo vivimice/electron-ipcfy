@@ -92,8 +92,6 @@ export class InvalidImplementationError extends Error {
  */
 export class DuplicateImplementationError extends Error {
 
-    public static readonly type: unique symbol = Symbol('InvalidImplementationError');
-
     private topic: string;
 
     constructor(topic: string) {

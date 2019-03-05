@@ -26,5 +26,6 @@ export function ipcfy<D extends IpcDecl>(topic: string): Ipcfied<D> {
     return ipcRegistry.getHandler<D>(topic);
 }
 
+export { getTopicTimeout, setTopicTimeout, setIpcDefaultTimeout } from "./IpcRegistry";
 export { getCurrentIpcContext } from "./IpcContext";
 export { IpcTimeoutError, IpcNotImplementedError, DuplicateImplementationError, IpcInvocationError, IpcMethodNotFoundError, registerCustomIpcError } from "./utils";

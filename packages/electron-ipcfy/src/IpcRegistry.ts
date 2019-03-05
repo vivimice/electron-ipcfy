@@ -19,7 +19,7 @@ let defaultTimeOut = 1000;
  * 
  * @param timeOutInMills 0 to disable timeout. Use with caution!
  */
-export function setIpcDeultTimeout(timeOutInMills: number) {
+export function setIpcDefaultTimeout(timeOutInMills: number) {
     if (timeOutInMills >= 0) {
         defaultTimeOut = timeOutInMills;
     } else {
