@@ -1,6 +1,6 @@
 # electron-ipcfy
 
-[![npm version](https://badge.fury.io/js/electron-ipcfy.svg)](https://badge.fury.io/js/electron-ipcfy)
+[![npm version](https://badge.fury.io/js/electron-ipcfy.svg)](https://www.npmjs.com/package/electron-ipcfy)
 [![npm-taobao](https://npm.taobao.org/badge/v/electron-ipcfy.svg)](https://npm.taobao.org/package/electron-ipcfy)
 
 * [Introduction](#introduction)
