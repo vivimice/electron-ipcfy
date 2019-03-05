@@ -213,3 +213,4 @@ registerCustomIpcError(IpcMethodNotFoundError);
 registerCustomIpcError(IpcNotImplementedError);
 registerCustomIpcError(IpcTimeoutError);
 registerCustomIpcError(InvalidImplementationError);
+registerCustomIpcError(DuplicateImplementationError);
