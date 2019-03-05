@@ -99,7 +99,7 @@ export function stopAcceptRemoteCall(topic: string) {
 }
 
 async function invokeHandler(event, params: IpcInvokeParams) {
-    const { topic, callbackId, methodName } = params;
+    const { topic, callbackId, methodName, args, callerId } = params;
     const handler = handlers[topic];
     let error = null;
     let returnValue = null;
@@ -107,18 +107,15 @@ async function invokeHandler(event, params: IpcInvokeParams) {
         const method = handler[methodName];
         if (method instanceof Function) {
             try {
-                pushContext({
-                    callerId: params.callerId,
-                    topic: topic
-                });
-                returnValue = await method.apply(handler, params.args);
-            } catch (err) {
-                error = err;
+                pushContext({ callerId, topic });
+                returnValue = await method.apply(handler, args);
+            } catch (cause) {
+                error = new IpcInvocationError(topic, methodName, args, cause);
             } finally {
                 popContext();
             }
         } else {
-            error = new IpcMethodNotFoundError(params.methodName, topic);
+            error = new IpcMethodNotFoundError(methodName, topic);
         }
     } else {
         error = new IpcNotImplementedError(topic);
@@ -132,12 +129,12 @@ async function invokeHandler(event, params: IpcInvokeParams) {
         // Reply from main to renderer
         event.sender.send(callbackChannel, result);
     } else {
-        if (params.callerId == MAIN_PROCESS_CALLER_ID) {
+        if (callerId == MAIN_PROCESS_CALLER_ID) {
             // Reply from renderer to main
             ipcRenderer.send(callbackChannel, result);
         } else {
             // Reply from renderer to another renderer
-            ipcRenderer.sendTo(params.callerId, callbackChannel, result);
+            ipcRenderer.sendTo(callerId, callbackChannel, result);
         }
     }
 }
