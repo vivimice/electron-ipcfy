@@ -2,11 +2,11 @@ import { ipcRenderer } from "electron";
 import { getCurrentIpcContext } from "electron-ipcfy";
 import { rendererConfigs } from "./config";
 import { renderer1Service, renderer2Service, TestServiceImpl } from "./Services";
-import { rendererEntries } from "./utils";
+import { setupRenderer } from "./utils";
 
 const { readyChannel, patchArgs } = rendererConfigs.renderer1;
 
-export default rendererEntries(readyChannel, {
+export default setupRenderer(readyChannel, {
     smoke: async () => {
         await renderer1Service.__attachImpl(new class extends TestServiceImpl {
             async call(callerChain: string[], n: number, s: string, o: { b: boolean }, ...additional: any[]) {

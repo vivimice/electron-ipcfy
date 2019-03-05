@@ -4,14 +4,14 @@ import { n, s, b, prepareRenderer } from "../utils";
 import { InvalidImplementationError } from "electron-ipcfy/dist/utils";
 
 describe('InvalidImplementationError', () => {
-    it('local', () => {
-        expectError(InvalidImplementationError, async () => {
+    it('local', async () => {
+        await expectError(InvalidImplementationError, async () => {
             await mainService.__attachImpl(null);
         });
     });
 
-    it('remote: renderer1', () => {
-        expectError(InvalidImplementationError, async () => {
+    it('remote: renderer1', async () => {
+        await expectError(InvalidImplementationError, async () => {
             await prepareRenderer('renderer1', 'attachNullImpl');
         });
     });

@@ -4,7 +4,6 @@ import { mainService } from "./MainService";
 export async function monitorCounters() {
     await updateCountersView();
     setTimeout(async () => {
-        console.log(11111);
         monitorCounters();
     }, 1000);
 }
