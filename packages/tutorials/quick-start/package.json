@@ -1,0 +1,33 @@
+{
+  "name": "electron-ipcfy-tutorial-quick-start",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "tsc-watch": "tsc -w",
+    "bundle": "webpack --mode=production",
+    "bundle-watch": "webpack -w --mode=development",
+    "watch": "tsc && npm-run-all -r -p -l tsc-watch bundle-watch",
+    "electron": "electron .",
+    "start": "npm-run-all tsc bundle electron"
+  },
+  "keywords": [
+    "electron",
+    "ipc",
+    "electron-ipcfy"
+  ],
+  "author": "vivimice@gmail.com",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "electron-ipcfy": "../../electron-ipcfy"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5",
+    "typescript": "^3.3.3333",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
+  }
+}
