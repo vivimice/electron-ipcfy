@@ -10,8 +10,9 @@
     "bundle": "webpack --mode=production",
     "bundle-watch": "webpack -w --mode=development",
     "watch": "tsc && npm-run-all -r -p -l tsc-watch bundle-watch",
-    "electron": "electron .",
-    "start": "npm-run-all tsc bundle electron"
+    "build": "npm-run-all tsc bundle",
+    "start-main": "electron .",
+    "start-renderer": "electron . --renderer"
   },
   "keywords": [
     "electron",
