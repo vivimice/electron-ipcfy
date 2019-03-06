@@ -98,6 +98,11 @@ export class IpcRegistry {
             this.routeTable[topic] = remoteId;
             return true;
         } else {
+            // handle webcontent reload situation
+            // webcontent won't change
+            if (!this.localHandlers[topic] && this.routeTable[topic] == remoteId) {
+                return true;
+            }
             return false;
         }
     }
