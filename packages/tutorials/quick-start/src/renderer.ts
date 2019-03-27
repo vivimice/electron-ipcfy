@@ -1,6 +1,6 @@
 import { tryAttachImpl } from "./ipc-impl";
 import { tokenService } from "./ipc";
-import { IpcNotImplementedError } from "electron-ipcfy";
+import { IpcNotImplementedError, IpcTimeoutError } from "electron-ipcfy";
 
 async function pollToken() {
     const tokenDiv = document.getElementById('token');
@@ -14,6 +14,9 @@ async function pollToken() {
         if (e instanceof IpcNotImplementedError) {
             // not yet registered.
             tokenDiv.innerText = '......';
+        } else if (e instanceof IpcTimeoutError) {
+            tokenDiv.innerText = '......';
+            console.log(`Token: Implementation timeout. Retrying ...`);
         } else {
             console.error(`Failed get token. Caused by: ${e.stack}`);
             tokenDiv.innerText = 'ERROR!';
