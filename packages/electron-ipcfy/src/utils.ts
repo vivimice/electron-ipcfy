@@ -221,10 +221,10 @@ export class IpcTimeoutError extends Error {
 /**
  * Register builtin ipc errors
  */
-registerCustomIpcError(Error);
-registerCustomIpcError(IpcInvocationError);
-registerCustomIpcError(IpcMethodNotFoundError);
-registerCustomIpcError(IpcNotImplementedError);
-registerCustomIpcError(IpcTimeoutError);
-registerCustomIpcError(InvalidImplementationError);
-registerCustomIpcError(DuplicateImplementationError);
+registerCustomIpcError(Error, 'Error');
+registerCustomIpcError(IpcInvocationError, 'electronipcfy.IpcInvocationError');
+registerCustomIpcError(IpcMethodNotFoundError, 'electronipcfy.IpcMethodNotFoundError');
+registerCustomIpcError(IpcNotImplementedError, 'electronipcfy.IpcNotImplementedError');
+registerCustomIpcError(IpcTimeoutError, 'electronipcfy.IpcTimeoutError');
+registerCustomIpcError(InvalidImplementationError, 'electronipcfy.InvalidImplementationError');
+registerCustomIpcError(DuplicateImplementationError, 'electronipcfy.DuplicateImplementationError');
