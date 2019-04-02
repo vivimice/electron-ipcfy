@@ -77,9 +77,9 @@ IpcImpl resident in renderer process will automatically detach from previously a
 
 ### Timeout
 
-Remote method call across process has the risk of halt indefinitely. electron-ipcfy will try its best to ensure all methods returns at last, but there are still some occasions that it won't return expected.
+Remote method call across process has the risk of halt indefinitely. electron-ipcfy will try its best to ensure all methods return at last, but there are still some occasions that it won't return as expected.
 
-For example, when peer process received method call request, it will start processing and return value to sender via ipc. But peer process may crash right before sending reply ipc. So caller won't get its return value ipc call forever.
+For example, when peer process received a method call request, it will start processing then return value to sender via ipc. But peer process may crash right before sending reply ipc. So caller won't get its return value ipc call forever.
 
 In these cases, timeout is the last resort of taking caller out of the indefinite waiting status.
 
@@ -165,6 +165,8 @@ console.log(restored instanceof MyError);   // false
 ```
 
 In `electron-ipcfy`, error object's prototype info can be restored after method call, if the type of the error is registered on BOTH sender side and receiver side BEFORE method invocation.
+
+Note: If you use bundler or code minizier (such as production mode of webpack), function names may be mangled to some simplified form (like `t`). So explicitly passing custom error class name via `name` param is always a good idea.
 
 ## Class References
 
